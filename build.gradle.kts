@@ -19,9 +19,6 @@ plugins {
 allprojects {
     apply(plugin = "kotlin")
     apply(plugin = "com.github.johnrengelman.shadow")
-    tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
-        archiveFileName.set("${rootProject.name}.jar")
-    }
 
     repositories {
         mavenCentral()
@@ -46,6 +43,7 @@ allprojects {
     tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
         dependsOn(tasks.processResources)
         archiveFileName.set("${rootProject.name}.jar")
+        classifier = null
 
         doLast {
             copy {
