@@ -1,6 +1,6 @@
 typealias ShadowJar = com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-val kotlin_version = "1.7.0"
+val kotlin_version = "1.8.0"
 buildscript {
     repositories {
         gradlePluginPortal()
@@ -11,7 +11,9 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.8.0"
+    id("maven-publish")
+
 }
 
 allprojects {
@@ -34,9 +36,11 @@ allprojects {
     }
 
     dependencies {
-        api(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+//        api(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
         compileOnly("org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT")
         compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
+        api("de.tr7zw", "item-nbt-api-plugin", "2.10.0")
+
     }
     tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
         dependsOn(tasks.processResources)
@@ -61,6 +65,43 @@ allprojects {
                 }
             }
         }
+    }
+
+    lateinit var sourcesArtifact: PublishArtifact
+
+
+    tasks {
+        artifacts {
+            sourcesArtifact = archives(getByName("shadowJar")) {
+                classifier = null
+            }
+        }
+    }
+
+    apply(plugin = "maven-publish")
+
+    publishing {
+        val repo = System.getenv("GITHUB_REPOSITORY")
+        if (repo === null) return@publishing
+        repositories {
+            maven {
+                url = uri("https://s01.oss.sonatype.org/content/repositories/releases/")
+                credentials {
+
+                    username = System.getenv("SONATYPE_USERNAME")
+                    password = System.getenv("SONATYPE_PASSWORD")
+                }
+            }
+        }
+        publications {
+            register<MavenPublication>(project.name) {
+                groupId = "io.github.bruce0203"
+                artifactId = project.name.toLowerCase()
+                version = System.getenv("GITHUB_BUILD_NUMBER")?: project.version.toString()
+                artifact(sourcesArtifact)
+            }
+        }
+
     }
 
 }
